@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Skye — Calm Through Every Storm</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0B1520;--card:#142231;--card2:#1a2d40;
+  --teal:#2DC88A;--blue:#6AAFE0;--yellow:#FFD100;--pink:#C0386A;
+  --white:#FFFFFF;--off:#C8DCF0;--muted:#6A8BA8;--dim:#3A5570;
+  --safe-bg:rgba(45,200,138,0.12);--safe-border:rgba(45,200,138,0.3);
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--off);font-family:'DM Sans',sans-serif;font-weight:400;display:flex;justify-content:center;align-items:center}
+
+/* APP SHELL */
+.app{width:100%;max-width:430px;height:100vh;max-height:932px;display:flex;flex-direction:column;position:relative;overflow:hidden;background:var(–bg)}
+@media(min-width:431px){
+body{background:#060a10;padding:20px}
+.app{border-radius:40px;border:2px solid #1f2f42;height:min(95vh,900px);box-shadow:0 40px 100px rgba(0,0,0,0.7)}
+}
+
+/* STATUS BAR */
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:12px 20px 4px;font-size:11px;color:var(–muted);flex-shrink:0;z-index:10}
+.status-indicator{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:500}
+.status-dot{width:6px;height:6px;border-radius:50%}
+
+/* MAIN CONTENT */
+.main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
+.main::-webkit-scrollbar{display:none}
+.screen{display:none;min-height:100%}
+.screen.active{display:block}
+
+/* BOTTOM NAV */
+.bottom-nav{display:flex;border-top:1px solid rgba(255,255,255,0.06);padding:8px 8px 24px;flex-shrink:0;background:var(–bg);z-index:10}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border:none;background:none;cursor:pointer;font-family:‘DM Sans’,sans-serif;transition:all 0.2s}
+.nav-btn .nav-icon{font-size:20px;transition:transform 0.2s}
+.nav-btn .nav-label{font-size:9px;color:var(–dim);letter-spacing:0.03em;transition:color 0.2s}
+.nav-btn.active .nav-label{color:var(–teal)}
+.nav-btn:active .nav-icon{transform:scale(0.9)}
+
+/* ════════ HOME SCREEN ════════ */
+.sky-header{position:relative;padding:8px 20px 24px;text-align:center;overflow:hidden}
+.sky-gradient{position:absolute;inset:0;transition:background 0.6s ease}
+.sky-gradient.calm{background:linear-gradient(180deg,#0a1628 0%,#112240 55%,transparent 100%)}
+.sky-gradient.watch{background:linear-gradient(180deg,#1a1400 0%,#251d00 45%,transparent 100%)}
+.sky-gradient.warning{background:linear-gradient(180deg,#1a0010 0%,#240016 45%,transparent 100%)}
+.sky-content{position:relative;z-index:1}
+.weather-icon{font-size:44px;margin-bottom:4px}
+.temp{font-family:‘DM Serif Display’,serif;font-size:56px;color:var(–white);line-height:1}
+.condition{font-size:11px;color:var(–muted);text-transform:uppercase;letter-spacing:0.1em;margin-top:4px}
+
+/* ALERT BANNER */
+.alert-banner{margin:0 16px 12px;padding:10px 14px;border-radius:12px;display:none;align-items:center;gap:8px;font-size:11px;font-weight:500;animation:slideDown 0.3s ease}
+.alert-banner.show{display:flex}
+.alert-banner.watch-banner{background:rgba(255,209,0,0.12);border:1px solid rgba(255,209,0,0.4);color:var(–yellow)}
+.alert-banner.warning-banner{background:rgba(192,56,106,0.15);border:1px solid rgba(192,56,106,0.5);color:var(–pink)}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+/* SAFE CARD */
+.safe-card{margin:0 16px 12px;padding:14px;border-radius:14px;display:flex;gap:10px;align-items:flex-start;transition:all 0.4s ease}
+.safe-card.safe{background:var(–safe-bg);border:1px solid var(–safe-border)}
+.safe-card.caution{background:rgba(255,209,0,0.08);border:1px solid rgba(255,209,0,0.25)}
+.safe-card.danger{background:rgba(192,56,106,0.1);border:1px solid rgba(192,56,106,0.3)}
+.safe-dot{width:10px;height:10px;border-radius:50%;margin-top:3px;flex-shrink:0;transition:all 0.4s}
+.safe-card.safe .safe-dot{background:var(–teal);box-shadow:0 0 0 4px rgba(45,200,138,0.15)}
+.safe-card.caution .safe-dot{background:var(–yellow);box-shadow:0 0 0 4px rgba(255,209,0,0.15)}
+.safe-card.danger .safe-dot{background:var(–pink);box-shadow:0 0 0 4px rgba(192,56,106,0.15)}
+.safe-title{font-size:13px;font-weight:600;margin-bottom:3px;transition:color 0.4s}
+.safe-card.safe .safe-title{color:var(–teal)}
+.safe-card.caution .safe-title{color:var(–yellow)}
+.safe-card.danger .safe-title{color:var(–pink)}
+.safe-text{font-size:11px;color:var(–muted);line-height:1.55}
+
+/* AM I SAFE BUTTON */
+.ami-safe-btn{display:block;width:calc(100% - 32px);margin:0 16px 14px;padding:14px;border-radius:14px;border:1px solid rgba(45,200,138,0.35);background:rgba(45,200,138,0.08);color:var(–teal);font-family:‘DM Sans’,sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;letter-spacing:0.02em}
+.ami-safe-btn:active{transform:scale(0.98);background:rgba(45,200,138,0.15)}
+
+/* DETAIL GRID */
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px;margin-bottom:12px}
+.detail-card{background:var(–card);border:0.5px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px}
+.detail-label{font-size:9px;color:var(–dim);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px}
+.detail-value{font-size:15px;font-weight:600;margin-bottom:2px}
+.detail-sub{font-size:9px;color:var(–dim)}
+
+/* STORM PROGRESS */
+.storm-progress{margin:0 16px 12px;background:var(–card);border:0.5px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px}
+.sp-header{display:flex;justify-content:space-between;font-size:10px;margin-bottom:6px}
+.sp-title{color:var(–muted)}
+.sp-pct{color:var(–blue);font-weight:600}
+.sp-bar{height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden}
+.sp-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(–teal),var(–blue));transition:width 0.6s ease}
+.sp-times{display:flex;justify-content:space-between;font-size:8px;color:var(–dim);margin-top:4px}
+
+/* COMPANION MESSAGE */
+.companion-box{margin:0 16px 12px;background:var(–card);border:0.5px solid rgba(255,255,255,0.06);border-radius:14px;padding:14px}
+.companion-label{font-size:9px;color:var(–teal);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.companion-pulse{width:6px;height:6px;border-radius:50%;background:var(–teal);animation:pulse 2s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.companion-text{font-family:‘DM Serif Display’,serif;font-style:italic;font-size:14px;color:var(–off);line-height:1.7}
+
+/* ════════ TOOLKIT SCREEN ════════ */
+.toolkit-header{padding:20px 20px 16px}
+.toolkit-header h2{font-family:‘DM Serif Display’,serif;font-size:24px;color:var(–white);margin-bottom:4px}
+.toolkit-header p{font-size:13px;color:var(–muted)}
+.tool-card{display:flex;align-items:center;gap:14px;margin:0 16px 10px;background:var(–card);border:0.5px solid rgba(255,255,255,0.06);border-radius:14px;padding:14px;cursor:pointer;transition:all 0.15s}
+.tool-card:active{transform:scale(0.98);background:var(–card2)}
+.tool-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.tool-info{flex:1}
+.tool-name{font-size:14px;color:var(–white);font-weight:500;margin-bottom:2px}
+.tool-desc{font-size:11px;color:var(–muted)}
+.tool-arrow{color:var(–dim);font-size:16px}
+
+/* TOOL OVERLAYS */
+.overlay{position:fixed;inset:0;background:var(–bg);z-index:200;display:none;flex-direction:column;max-width:430px;margin:0 auto}
+.overlay.open{display:flex}
+.overlay-header{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0}
+.overlay-back{background:none;border:none;color:var(–muted);font-size:22px;cursor:pointer;padding:4px}
+.overlay-title{font-family:‘DM Serif Display’,serif;font-size:20px;color:var(–white)}
+.overlay-body{flex:1;overflow-y:auto;padding:24px 20px;-webkit-overflow-scrolling:touch}
+
+/* BREATHING EXERCISE */
+.breath-container{display:flex;flex-direction:column;align-items:center;padding-top:20px}
+.breath-circle-wrap{position:relative;width:200px;height:200px;margin-bottom:32px}
+.breath-ring{width:200px;height:200px;border-radius:50%;border:2px solid rgba(45,200,138,0.2);display:flex;align-items:center;justify-content:center;transition:all 1s ease}
+.breath-ring.inhale{transform:scale(1.15);border-color:rgba(45,200,138,0.6);background:rgba(45,200,138,0.05)}
+.breath-ring.hold{transform:scale(1.15);border-color:rgba(106,175,224,0.5);background:rgba(106,175,224,0.05)}
+.breath-ring.exhale{transform:scale(1);border-color:rgba(45,200,138,0.2);background:transparent}
+.breath-instruction{font-family:‘DM Serif Display’,serif;font-size:22px;color:var(–white)}
+.breath-timer{font-size:48px;color:var(–teal);font-weight:300;margin-top:4px}
+.breath-start-btn{background:var(–teal);border:none;border-radius:50px;padding:14px 48px;color:#080f18;font-family:‘DM Sans’,sans-serif;font-size:15px;font-weight:600;cursor:pointer;margin-top:20px;transition:all 0.2s}
+.breath-start-btn:active{transform:scale(0.96)}
+.breath-cycles{font-size:12px;color:var(–dim);margin-top:12px}
+.breath-desc{font-size:13px;color:var(–muted);line-height:1.7;text-align:center;margin-top:24px;max-width:300px}
+
+/* GROUNDING EXERCISE */
+.ground-step{text-align:center;padding:20px 0}
+.ground-number{font-family:‘DM Serif Display’,serif;font-size:72px;color:var(–blue);opacity:0.3;line-height:1}
+.ground-sense{font-size:14px;color:var(–white);font-weight:500;margin:8px 0 16px}
+.ground-prompt{font-family:‘DM Serif Display’,serif;font-style:italic;font-size:20px;color:var(–off);line-height:1.6;margin-bottom:24px;max-width:280px;margin-left:auto;margin-right:auto}
+.ground-items{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:24px}
+.ground-item{background:var(–card);border:1px solid rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;font-size:13px;color:var(–muted);cursor:pointer;transition:all 0.2s}
+.ground-item.filled{border-color:var(–blue);color:var(–blue);background:rgba(106,175,224,0.1)}
+.ground-next-btn{background:var(–blue);border:none;border-radius:50px;padding:12px 40px;color:white;font-family:‘DM Sans’,sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s}
+.ground-next-btn:disabled{opacity:0.3;cursor:default}
+.ground-next-btn:active:not(:disabled){transform:scale(0.96)}
+.ground-complete{text-align:center;padding:40px 0}
+.ground-complete-icon{font-size:48px;margin-bottom:16px}
+.ground-complete h3{font-family:‘DM Serif Display’,serif;font-size:24px;color:var(–white);margin-bottom:8px}
+.ground-complete p{font-size:14px;color:var(–muted);line-height:1.7}
+
+/* CHECKLIST */
+.check-item{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.check-box{width:22px;height:22px;border-radius:6px;border:1.5px solid var(–dim);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;flex-shrink:0;font-size:12px;color:transparent}
+.check-box.checked{background:var(–teal);border-color:var(–teal);color:white}
+.check-label{font-size:14px;color:var(–off)}
+
+/* STORM FACTS */
+.fact-card{background:rgba(106,175,224,0.08);border:1px solid rgba(106,175,224,0.2);border-radius:14px;padding:18px;margin-bottom:14px}
+.fact-emoji{font-size:24px;margin-bottom:8px}
+.fact-title{font-size:14px;color:var(–white);font-weight:500;margin-bottom:6px}
+.fact-body{font-size:13px;color:var(–muted);line-height:1.65}
+
+/* ════════ PROFILE SCREEN ════════ */
+.profile-header{padding:20px 20px 16px}
+.profile-header h2{font-family:‘DM Serif Display’,serif;font-size:24px;color:var(–white);margin-bottom:4px}
+.profile-header p{font-size:13px;color:var(–muted)}
+.profile-section{padding:0 16px;margin-bottom:20px}
+.profile-section-title{font-size:11px;color:var(–dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px}
+.trigger-row{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(–card);border-radius:12px;margin-bottom:6px}
+.trigger-info{display:flex;align-items:center;gap:10px}
+.trigger-icon{font-size:18px}
+.trigger-name{font-size:14px;color:var(–off)}
+.toggle{width:44px;height:24px;border-radius:12px;background:rgba(255,255,255,0.1);position:relative;cursor:pointer;transition:background 0.2s}
+.toggle.on{background:var(–teal)}
+.toggle-knob{width:20px;height:20px;border-radius:50%;background:white;position:absolute;top:2px;left:2px;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+.toggle.on .toggle-knob{transform:translateX(20px)}
+
+/* ════════ HISTORY SCREEN ════════ */
+.history-header{padding:20px 20px 16px}
+.history-header h2{font-family:‘DM Serif Display’,serif;font-size:24px;color:var(–white);margin-bottom:4px}
+.history-header p{font-size:13px;color:var(–muted)}
+.season-card{margin:0 16px 16px;background:var(–card);border-radius:16px;padding:18px}
+.season-stat-row{display:flex;justify-content:space-around;margin-bottom:16px}
+.season-stat{text-align:center}
+.season-stat .num{font-family:‘DM Serif Display’,serif;font-size:28px;color:var(–white)}
+.season-stat .label{font-size:10px;color:var(–dim);margin-top:2px}
+.season-bar-label{display:flex;justify-content:space-between;font-size:10px;margin-bottom:6px}
+.season-bar-title{color:var(–muted)}
+.season-bar-value{color:var(–teal);font-weight:600}
+.season-bar{height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden}
+.season-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(–teal),var(–blue))}
+.storm-log{margin:0 16px}
+.storm-log-title{font-size:11px;color:var(–dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px}
+.log-entry{background:var(–card);border-radius:12px;padding:14px;margin-bottom:8px}
+.log-date{font-size:11px;color:var(–muted);margin-bottom:4px}
+.log-type{font-size:14px;color:var(–white);font-weight:500;margin-bottom:2px}
+.log-feeling{display:flex;align-items:center;gap:6px;font-size:12px;color:var(–dim);margin-bottom:6px}
+.log-note{font-size:12px;color:var(–muted);font-style:italic;line-height:1.5}
+
+/* JOURNAL OVERLAY */
+.journal-area{width:100%;min-height:120px;background:var(–card);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;color:var(–off);font-family:‘DM Sans’,sans-serif;font-size:14px;resize:none;outline:none;line-height:1.6}
+.journal-area::placeholder{color:var(–dim)}
+.mood-selector{display:flex;gap:8px;justify-content:center;margin:16px 0}
+.mood-btn{width:44px;height:44px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.1);background:none;font-size:22px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center}
+.mood-btn.selected{border-color:var(–teal);background:rgba(45,200,138,0.1);transform:scale(1.1)}
+.journal-save{width:100%;background:var(–teal);border:none;border-radius:12px;padding:14px;color:#080f18;font-family:‘DM Sans’,sans-serif;font-size:15px;font-weight:600;cursor:pointer;margin-top:16px;transition:all 0.2s}
+.journal-save:active{transform:scale(0.98)}
+
+/* AM I SAFE OVERLAY */
+.safe-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:300;display:none;align-items:center;justify-content:center;padding:24px}
+.safe-overlay.open{display:flex}
+.safe-modal{background:var(–bg);border:1px solid rgba(45,200,138,0.2);border-radius:24px;padding:32px 24px;max-width:360px;width:100%;text-align:center;animation:modalIn 0.3s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+.safe-modal-icon{font-size:48px;margin-bottom:12px}
+.safe-modal h3{font-family:‘DM Serif Display’,serif;font-size:22px;color:var(–teal);margin-bottom:12px}
+.safe-modal p{font-size:14px;color:var(–muted);line-height:1.7;margin-bottom:6px}
+.safe-modal .disclaimer{font-size:10px;color:var(–dim);margin-top:16px;line-height:1.5}
+.safe-modal-close{background:var(–card);border:1px solid rgba(255,255,255,0.08);border-radius:50px;padding:12px 32px;color:var(–off);font-family:‘DM Sans’,sans-serif;font-size:13px;cursor:pointer;margin-top:20px;transition:all 0.2s}
+.safe-modal-close:active{transform:scale(0.96)}
+
+/* DEMO CONTROLS */
+.demo-bar{padding:8px 16px;display:flex;gap:6px;justify-content:center;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.demo-btn{font-size:10px;padding:5px 14px;border-radius:50px;border:1px solid rgba(255,255,255,0.1);background:none;color:var(–muted);cursor:pointer;font-family:‘DM Sans’,sans-serif;font-weight:500;transition:all 0.2s}
+.demo-btn.active-calm{border-color:var(–blue);color:var(–blue);background:rgba(106,175,224,0.1)}
+.demo-btn.active-watch{border-color:var(–yellow);color:var(–yellow);background:rgba(255,209,0,0.1)}
+.demo-btn.active-warning{border-color:var(–pink);color:var(–pink);background:rgba(192,56,106,0.1)}
+</style>
+
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- DEMO MODE SWITCHER -->
+
+  <div class="demo-bar">
+    <button class="demo-btn active-calm" onclick="setAlertState('calm')">🔵 Clear</button>
+    <button class="demo-btn" onclick="setAlertState('watch')">🟡 Watch</button>
+    <button class="demo-btn" onclick="setAlertState('warning')">🩷 Warning</button>
+    <span style="font-size:9px;color:var(--dim);padding:6px 0;margin-left:4px">Demo Mode</span>
+  </div>
+
+  <!-- STATUS BAR -->
+
+  <div class="status-bar">
+    <div style="display:flex;align-items:center;gap:6px">
+      <div style="background:rgba(255,255,255,0.07);border-radius:20px;padding:3px 10px;font-size:10px;display:flex;align-items:center;gap:4px">
+        <div class="status-dot" id="statusDot" style="background:var(--teal)"></div>
+        Columbia, AL
+      </div>
+    </div>
+    <div class="status-indicator" id="statusText">
+      <span>✓ No active alerts</span>
+    </div>
+  </div>
+
+  <!-- MAIN SCROLLABLE AREA -->
+
+  <div class="main">
+
+```
+<!-- ═══ HOME SCREEN ═══ -->
+<div class="screen active" id="screen-home">
+  <div class="sky-header">
+    <div class="sky-gradient calm" id="skyGradient"></div>
+    <div class="sky-content">
+      <div class="weather-icon" id="weatherIcon">⛈</div>
+      <div class="temp">68°</div>
+      <div class="condition" id="conditionText">Thunderstorm passing</div>
+    </div>
+  </div>
+
+  <div class="alert-banner watch-banner" id="watchBanner">
+    ⚡ Severe Thunderstorm Watch — Houston County · Until 11:00 PM
+  </div>
+  <div class="alert-banner warning-banner" id="warningBanner">
+    🌪 Tornado Warning — Houston County · Until 10:15 PM
+  </div>
+
+  <div class="safe-card safe" id="safeCard">
+    <div class="safe-dot"></div>
+    <div>
+      <div class="safe-title" id="safeTitle">Based on current data, risk appears low</div>
+      <div class="safe-text" id="safeText">Storm appears to be moving northeast, away from your location. No active warnings in your county at this time.</div>
+    </div>
+  </div>
+
+  <button class="ami-safe-btn" id="amiSafeBtn" onclick="openSafeModal()">Am I Safe?</button>
+
+  <div class="detail-grid">
+    <div class="detail-card">
+      <div class="detail-label">Structural Risk</div>
+      <div class="detail-value" id="riskValue" style="color:var(--teal)">LOW</div>
+      <div class="detail-sub">Typical homes handle this fine</div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-label">Duration Near You</div>
+      <div class="detail-value" style="color:var(--off)">~35 min</div>
+      <div class="detail-sub">Clears by 10:14 PM</div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-label">Thunder Expected</div>
+      <div class="detail-value" style="color:var(--blue)">Loud</div>
+      <div class="detail-sub">Normal for this storm type</div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-label">Lightning Risk</div>
+      <div class="detail-value" id="lightningValue" style="color:var(--yellow)">Moderate</div>
+      <div class="detail-sub">Stay indoors</div>
+    </div>
+  </div>
+
+  <div class="storm-progress">
+    <div class="sp-header">
+      <span class="sp-title">Storm passing your area</span>
+      <span class="sp-pct" id="stormPct">68% through</span>
+    </div>
+    <div class="sp-bar"><div class="sp-fill" id="stormFill" style="width:68%"></div></div>
+    <div class="sp-times"><span>Started 9:12 PM</span><span>Clears ~10:14 PM</span></div>
+  </div>
+
+  <div class="companion-box">
+    <div class="companion-label"><div class="companion-pulse"></div> Skye Companion</div>
+    <div class="companion-text" id="companionMsg">"The strongest part of this storm has already passed your area. What you're hearing now is the trailing edge — it sounds intense, but it's on its way out. You're doing well."</div>
+  </div>
+
+  <div style="height:16px"></div>
+</div>
+
+<!-- ═══ TOOLKIT SCREEN ═══ -->
+<div class="screen" id="screen-toolkit">
+  <div class="toolkit-header">
+    <h2>Anxiety Toolkit</h2>
+    <p>Evidence-based tools for in-the-moment relief.</p>
+  </div>
+
+  <div class="tool-card" onclick="openOverlay('breathing')">
+    <div class="tool-icon" style="background:rgba(45,200,138,0.15)">🌬</div>
+    <div class="tool-info"><div class="tool-name">Breathing Timer</div><div class="tool-desc">Box breathing · 60 seconds · Lowers cortisol</div></div>
+    <div class="tool-arrow">›</div>
+  </div>
+
+  <div class="tool-card" onclick="openOverlay('grounding')">
+    <div class="tool-icon" style="background:rgba(106,175,224,0.15)">🌿</div>
+    <div class="tool-info"><div class="tool-name">5-4-3-2-1 Grounding</div><div class="tool-desc">Sensory anchoring · Clinically validated</div></div>
+    <div class="tool-arrow">›</div>
+  </div>
+
+  <div class="tool-card" onclick="openOverlay('checklist')">
+    <div class="tool-icon" style="background:rgba(255,209,0,0.15)">📋</div>
+    <div class="tool-info"><div class="tool-name">Preparedness Checklist</div><div class="tool-desc">Calm, practical storm readiness</div></div>
+    <div class="tool-arrow">›</div>
+  </div>
+
+  <div class="tool-card" onclick="openOverlay('facts')">
+    <div class="tool-icon" style="background:rgba(106,80,200,0.15)">⚡</div>
+    <div class="tool-info"><div class="tool-name">Storm Facts</div><div class="tool-desc">Understand what you're hearing</div></div>
+    <div class="tool-arrow">›</div>
+  </div>
+
+  <div class="tool-card" onclick="openOverlay('journal')">
+    <div class="tool-icon" style="background:rgba(192,56,106,0.15)">📝</div>
+    <div class="tool-info"><div class="tool-name">Post-Storm Journal</div><div class="tool-desc">Reflect, track, build resilience</div></div>
+    <div class="tool-arrow">›</div>
+  </div>
+
+  <div style="height:16px"></div>
+</div>
+
+<!-- ═══ PROFILE SCREEN ═══ -->
+<div class="screen" id="screen-profile">
+  <div class="profile-header">
+    <h2>Fear Profile</h2>
+    <p>Tell Skye what scares you most. Every alert adapts to your triggers.</p>
+  </div>
+
+  <div class="profile-section">
+    <div class="profile-section-title">My Storm Triggers</div>
+    <div class="trigger-row"><div class="trigger-info"><span class="trigger-icon">🌪</span><span class="trigger-name">Tornadoes</span></div><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+    <div class="trigger-row"><div class="trigger-info"><span class="trigger-icon">⚡</span><span class="trigger-name">Lightning</span></div><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+    <div class="trigger-row"><div class="trigger-info"><span class="trigger-icon">💨</span><span class="trigger-name">Strong Wind</span></div><div class="toggle" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+    <div class="trigger-row"><div class="trigger-info"><span class="trigger-icon">🔊</span><span class="trigger-name">Loud Thunder</span></div><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+    <div class="trigger-row"><div class="trigger-info"><span class="trigger-icon">🔌</span><span class="trigger-name">Power Outages</span></div><div class="toggle" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+    <div class="trigger-row"><div class="trigger-info"><span class="trigger-icon">🌊</span><span class="trigger-name">Flooding</span></div><div class="toggle" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+    <div class="trigger-row"><div class="trigger-info"><span class="trigger-icon">🏠</span><span class="trigger-name">Being Alone</span></div><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+  </div>
+
+  <div class="profile-section">
+    <div class="profile-section-title">Notification Preferences</div>
+    <div class="trigger-row"><div class="trigger-info"><span class="trigger-icon">🔔</span><span class="trigger-name">Pre-storm calm check-in</span></div><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+    <div class="trigger-row"><div class="trigger-info"><span class="trigger-icon">🌅</span><span class="trigger-name">Morning weather brief</span></div><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+    <div class="trigger-row"><div class="trigger-info"><span class="trigger-icon">☀️</span><span class="trigger-name">Post-storm all clear</span></div><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+  </div>
+
+  <div style="height:16px"></div>
+</div>
+
+<!-- ═══ HISTORY SCREEN ═══ -->
+<div class="screen" id="screen-history">
+  <div class="history-header">
+    <h2>Storm Season</h2>
+    <p>Your progress through this season. You're stronger than you think.</p>
+  </div>
+
+  <div class="season-card">
+    <div class="season-stat-row">
+      <div class="season-stat"><div class="num">14</div><div class="label">Storms survived</div></div>
+      <div class="season-stat"><div class="num">5.6</div><div class="label">Avg anxiety (↓ from 8.2)</div></div>
+      <div class="season-stat"><div class="num">78%</div><div class="label">Used toolkit</div></div>
+    </div>
+    <div class="season-bar-label">
+      <span class="season-bar-title">Season progress</span>
+      <span class="season-bar-value">March → June</span>
+    </div>
+    <div class="season-bar"><div class="season-fill" style="width:35%"></div></div>
+  </div>
+
+  <div class="storm-log">
+    <div class="storm-log-title">Recent storms</div>
+    <div class="log-entry">
+      <div class="log-date">March 23, 2026 · 9:12 PM</div>
+      <div class="log-type">Thunderstorm — Houston County</div>
+      <div class="log-feeling">Anxiety: 😟 6/10 → 😌 3/10</div>
+      <div class="log-note">"The breathing timer helped a lot. Knowing it was 68% through made me feel like I could wait it out."</div>
+    </div>
+    <div class="log-entry">
+      <div class="log-date">March 19, 2026 · 3:45 PM</div>
+      <div class="log-type">Severe Thunderstorm Watch — Houston County</div>
+      <div class="log-feeling">Anxiety: 😰 7/10 → 😊 2/10</div>
+      <div class="log-note">"Watch never became a warning. Skye told me that early and I didn't spiral."</div>
+    </div>
+    <div class="log-entry">
+      <div class="log-date">March 14, 2026 · 11:20 PM</div>
+      <div class="log-type">Tornado Watch — Houston County</div>
+      <div class="log-feeling">Anxiety: 😱 9/10 → 😟 5/10</div>
+      <div class="log-note">"This one was hard. But the companion stayed with me the whole time and I didn't check radar once."</div>
+    </div>
+  </div>
+
+  <div style="height:16px"></div>
+</div>
+```
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+
+  <div class="bottom-nav">
+    <button class="nav-btn active" onclick="switchScreen('home')"><div class="nav-icon">🌦</div><div class="nav-label">Now</div></button>
+    <button class="nav-btn" onclick="switchScreen('toolkit')"><div class="nav-icon">🧘</div><div class="nav-label">Toolkit</div></button>
+    <button class="nav-btn" onclick="switchScreen('profile')"><div class="nav-icon">⚙️</div><div class="nav-label">Profile</div></button>
+    <button class="nav-btn" onclick="switchScreen('history')"><div class="nav-icon">📊</div><div class="nav-label">History</div></button>
+  </div>
+
+</div>
+
+<!-- ════════ OVERLAYS ════════ -->
+
+<!-- BREATHING -->
+
+<div class="overlay" id="overlay-breathing">
+  <div class="overlay-header">
+    <button class="overlay-back" onclick="closeOverlay('breathing')">←</button>
+    <div class="overlay-title">Breathing Timer</div>
+  </div>
+  <div class="overlay-body">
+    <div class="breath-container">
+      <div class="breath-circle-wrap">
+        <div class="breath-ring" id="breathRing">
+          <div>
+            <div class="breath-instruction" id="breathInstruction">Ready</div>
+            <div class="breath-timer" id="breathCount"></div>
+          </div>
+        </div>
+      </div>
+      <button class="breath-start-btn" id="breathStartBtn" onclick="startBreathing()">Begin</button>
+      <div class="breath-cycles" id="breathCycles"></div>
+      <div class="breath-desc">Box breathing activates your parasympathetic nervous system and lowers cortisol. Inhale 4 seconds, hold 4, exhale 4, hold 4. Repeat.</div>
+    </div>
+  </div>
+</div>
+
+<!-- GROUNDING -->
+
+<div class="overlay" id="overlay-grounding">
+  <div class="overlay-header">
+    <button class="overlay-back" onclick="closeOverlay('grounding');resetGrounding()">←</button>
+    <div class="overlay-title">5-4-3-2-1 Grounding</div>
+  </div>
+  <div class="overlay-body" id="groundingBody"></div>
+</div>
+
+<!-- CHECKLIST -->
+
+<div class="overlay" id="overlay-checklist">
+  <div class="overlay-header">
+    <button class="overlay-back" onclick="closeOverlay('checklist')">←</button>
+    <div class="overlay-title">Preparedness Checklist</div>
+  </div>
+  <div class="overlay-body">
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Having a plan reduces anxiety before a storm even starts. Check off what you've done.</p>
+    <div id="checklistItems"></div>
+  </div>
+</div>
+
+<!-- FACTS -->
+
+<div class="overlay" id="overlay-facts">
+  <div class="overlay-header">
+    <button class="overlay-back" onclick="closeOverlay('facts')">←</button>
+    <div class="overlay-title">Storm Facts</div>
+  </div>
+  <div class="overlay-body" id="factsBody"></div>
+</div>
+
+<!-- JOURNAL -->
+
+<div class="overlay" id="overlay-journal">
+  <div class="overlay-header">
+    <button class="overlay-back" onclick="closeOverlay('journal')">←</button>
+    <div class="overlay-title">Post-Storm Journal</div>
+  </div>
+  <div class="overlay-body">
+    <p style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--white);margin-bottom:4px">You made it through.</p>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px">Take a moment to check in with yourself. How are you feeling?</p>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em">How do you feel right now?</div>
+    <div class="mood-selector">
+      <button class="mood-btn" onclick="selectMood(this)">😰</button>
+      <button class="mood-btn" onclick="selectMood(this)">😟</button>
+      <button class="mood-btn" onclick="selectMood(this)">😐</button>
+      <button class="mood-btn" onclick="selectMood(this)">😌</button>
+      <button class="mood-btn" onclick="selectMood(this)">😊</button>
+    </div>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em">What helped? What didn't?</div>
+    <textarea class="journal-area" placeholder="The breathing timer helped me calm down. The thunder was loud but knowing it was almost over made it easier..."></textarea>
+    <button class="journal-save" onclick="saveJournal()">Save Entry</button>
+  </div>
+</div>
+
+<!-- AM I SAFE MODAL -->
+
+<div class="safe-overlay" id="safeOverlay" onclick="closeSafeModal(event)">
+  <div class="safe-modal" id="safeModal">
+    <div class="safe-modal-icon" id="safeModalIcon">🛡</div>
+    <h3 id="safeModalTitle">Based on current data, you appear safe</h3>
+    <p id="safeModalText">The nearest storm cell is approximately 22 miles southwest and moving northeast, away from your location. No tornado warnings are active in Houston County. Your home is built to handle storms like this.</p>
+    <p id="safeModalExtra" style="font-size:13px;color:var(--off);margin-top:8px">Estimated time remaining: ~35 minutes.</p>
+    <div class="disclaimer">Based on current data at this time. Skye does not guarantee safety and does not override official NWS warnings. Always follow local emergency guidance.</div>
+    <button class="safe-modal-close" onclick="closeSafeModal()">I understand</button>
+  </div>
+</div>
+
+<script>
+// ═══ STATE ═══
+let currentState = 'calm';
+let breathInterval = null;
+
+// ═══ SCREEN SWITCHING ═══
+function switchScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.querySelector('.main').scrollTop = 0;
+}
+
+// ═══ ALERT STATE ═══
+function setAlertState(state) {
+  currentState = state;
+  const gradient = document.getElementById('skyGradient');
+  const statusDot = document.getElementById('statusDot');
+  const statusText = document.getElementById('statusText');
+  const safeCard = document.getElementById('safeCard');
+  const safeTitle = document.getElementById('safeTitle');
+  const safeText = document.getElementById('safeText');
+  const watchBanner = document.getElementById('watchBanner');
+  const warningBanner = document.getElementById('warningBanner');
+  const conditionText = document.getElementById('conditionText');
+  const companionMsg = document.getElementById('companionMsg');
+  const riskValue = document.getElementById('riskValue');
+
+  // Reset
+  gradient.className = 'sky-gradient ' + state;
+  watchBanner.classList.remove('show');
+  warningBanner.classList.remove('show');
+
+  // Demo buttons
+  document.querySelectorAll('.demo-btn').forEach(b => b.className = 'demo-btn');
+  event.currentTarget.classList.add(state === 'calm' ? 'active-calm' : state === 'watch' ? 'active-watch' : 'active-warning');
+
+  if (state === 'calm') {
+    statusDot.style.background = 'var(--teal)';
+    statusText.innerHTML = '<span>✓ No active alerts</span>';
+    safeCard.className = 'safe-card safe';
+    safeTitle.textContent = 'Based on current data, risk appears low';
+    safeText.textContent = 'Storm appears to be moving northeast, away from your location. No active warnings in your county at this time.';
+    conditionText.textContent = 'Thunderstorm passing';
+    companionMsg.textContent = '"The strongest part of this storm has already passed your area. What you\'re hearing now is the trailing edge — it sounds intense, but it\'s on its way out. You\'re doing well."';
+    riskValue.textContent = 'LOW';
+    riskValue.style.color = 'var(--teal)';
+  } else if (state === 'watch') {
+    statusDot.style.background = 'var(--yellow)';
+    statusText.innerHTML = '<span style="color:var(--yellow)">⚡ Watch Active</span>';
+    watchBanner.classList.add('show');
+    safeCard.className = 'safe-card caution';
+    safeTitle.textContent = 'Conditions are developing nearby';
+    safeText.textContent = 'A severe thunderstorm watch is active. Based on current data, conditions may intensify. Stay aware and have a shelter plan ready.';
+    conditionText.textContent = 'Conditions developing';
+    companionMsg.textContent = '"A watch means conditions are possible, not certain. Think of it as a heads-up, not an emergency. You have time. Let\'s use it to prepare, not panic."';
+    riskValue.textContent = 'MODERATE';
+    riskValue.style.color = 'var(--yellow)';
+  } else {
+    statusDot.style.background = 'var(--pink)';
+    statusText.innerHTML = '<span style="color:var(--pink)">⚠ Warning Active</span>';
+    warningBanner.classList.add('show');
+    safeCard.className = 'safe-card danger';
+    safeTitle.textContent = 'Take shelter now';
+    safeText.textContent = 'A tornado warning is active in your county. Go to your safe room immediately. Interior room, lowest floor, away from windows. Skye will notify you when it lifts.';
+    conditionText.textContent = 'Take shelter now';
+    companionMsg.textContent = '"You\'re in your safe spot. That\'s exactly where you need to be. This warning covers a wide area — most people in it will be fine. I\'m staying right here with you until it\'s over."';
+    riskValue.textContent = 'HIGH';
+    riskValue.style.color = 'var(--pink)';
+  }
+}
+
+// ═══ AM I SAFE MODAL ═══
+function openSafeModal() {
+  const overlay = document.getElementById('safeOverlay');
+  const icon = document.getElementById('safeModalIcon');
+  const title = document.getElementById('safeModalTitle');
+  const text = document.getElementById('safeModalText');
+  const extra = document.getElementById('safeModalExtra');
+
+  if (currentState === 'calm') {
+    icon.textContent = '🛡';
+    title.textContent = 'Based on current data, you appear safe';
+    title.style.color = 'var(--teal)';
+    text.textContent = 'The nearest storm cell is approximately 22 miles southwest and moving northeast, away from your location. No tornado warnings are active in Houston County. Your home is built to handle storms like this.';
+    extra.textContent = 'Estimated time remaining: ~35 minutes.';
+  } else if (currentState === 'watch') {
+    icon.textContent = '⚡';
+    title.textContent = 'No immediate danger at this time';
+    title.style.color = 'var(--yellow)';
+    text.textContent = 'A watch is active, meaning conditions could develop. Based on current data, no warnings have been issued for your specific location. This is a good time to know where your safe room is — just in case.';
+    extra.textContent = 'Skye is monitoring conditions and will alert you if anything changes.';
+  } else {
+    icon.textContent = '🌪';
+    title.textContent = 'A warning is active — stay sheltered';
+    title.style.color = 'var(--pink)';
+    text.textContent = 'A tornado warning is active in your county. You are doing the right thing by taking shelter. Stay in your safe room, interior room, lowest floor, away from windows. Most people in warning areas are not directly impacted.';
+    extra.textContent = 'Skye will tell you the moment this warning lifts.';
+  }
+  overlay.classList.add('open');
+}
+
+function closeSafeModal(e) {
+  if (!e || e.target === document.getElementById('safeOverlay') || e.target.classList.contains('safe-modal-close')) {
+    document.getElementById('safeOverlay').classList.remove('open');
+  }
+}
+
+// ═══ OVERLAYS ═══
+function openOverlay(name) {
+  document.getElementById('overlay-' + name).classList.add('open');
+}
+function closeOverlay(name) {
+  document.getElementById('overlay-' + name).classList.remove('open');
+  if (name === 'breathing') stopBreathing();
+}
+
+// ═══ BREATHING ═══
+let breathPhase = 0;
+let breathSec = 0;
+let breathCycleCount = 0;
+
+function startBreathing() {
+  const btn = document.getElementById('breathStartBtn');
+  if (breathInterval) { stopBreathing(); return; }
+  btn.textContent = 'Stop';
+  breathPhase = 0; breathSec = 4; breathCycleCount = 0;
+  updateBreathUI();
+  breathInterval = setInterval(breathTick, 1000);
+}
+
+function breathTick() {
+  breathSec--;
+  if (breathSec <= 0) {
+    breathPhase = (breathPhase + 1) % 4;
+    breathSec = 4;
+    if (breathPhase === 0) {
+      breathCycleCount++;
+      document.getElementById('breathCycles').textContent = breathCycleCount + ' cycle' + (breathCycleCount > 1 ? 's' : '') + ' complete';
+    }
+  }
+  updateBreathUI();
+}
+
+function updateBreathUI() {
+  const ring = document.getElementById('breathRing');
+  const instr = document.getElementById('breathInstruction');
+  const count = document.getElementById('breathCount');
+  const phases = ['Inhale', 'Hold', 'Exhale', 'Hold'];
+  const classes = ['inhale', 'hold', 'exhale', 'hold'];
+  ring.className = 'breath-ring ' + classes[breathPhase];
+  instr.textContent = phases[breathPhase];
+  count.textContent = breathSec;
+}
+
+function stopBreathing() {
+  clearInterval(breathInterval);
+  breathInterval = null;
+  document.getElementById('breathStartBtn').textContent = 'Begin';
+  document.getElementById('breathRing').className = 'breath-ring';
+  document.getElementById('breathInstruction').textContent = 'Ready';
+  document.getElementById('breathCount').textContent = '';
+}
+
+// ═══ GROUNDING ═══
+const groundSteps = [
+  { num: 5, sense: 'things you can SEE', prompt: 'Look around you. Name five things you can see right now.', count: 5 },
+  { num: 4, sense: 'things you can TOUCH', prompt: 'What are four things you can physically feel?', count: 4 },
+  { num: 3, sense: 'things you can HEAR', prompt: 'Listen carefully. What three sounds do you notice?', count: 3 },
+  { num: 2, sense: 'things you can SMELL', prompt: 'Take a breath. What two things can you smell?', count: 2 },
+  { num: 1, sense: 'thing you can TASTE', prompt: 'What is one thing you can taste right now?', count: 1 },
+];
+let groundStep = 0;
+let groundFilled = 0;
+
+function renderGrounding() {
+  const body = document.getElementById('groundingBody');
+  if (groundStep >= groundSteps.length) {
+    body.innerHTML = '<div class="ground-complete"><div class="ground-complete-icon">🌿</div><h3>You\'re here. You\'re present.</h3><p style="max-width:280px;margin:8px auto 0">You just anchored yourself in the present moment. The storm is outside. You are inside, safe, and grounded. Take one more slow breath.</p></div>';
+    return;
+  }
+  const s = groundSteps[groundStep];
+  groundFilled = 0;
+  let items = '';
+  for (let i = 0; i < s.count; i++) {
+    items += '<div class="ground-item" onclick="fillGround(this)">' + (i + 1) + '</div>';
+  }
+  body.innerHTML = `
+    <div class="ground-step">
+      <div class="ground-number">${s.num}</div>
+      <div class="ground-sense">${s.sense}</div>
+      <div class="ground-prompt">${s.prompt}</div>
+      <div class="ground-items">${items}</div>
+      <button class="ground-next-btn" id="groundNextBtn" disabled onclick="nextGroundStep()">Next</button>
+    </div>`;
+}
+
+function fillGround(el) {
+  if (el.classList.contains('filled')) return;
+  el.classList.add('filled');
+  el.textContent = '✓';
+  groundFilled++;
+  const needed = groundSteps[groundStep].count;
+  if (groundFilled >= needed) {
+    document.getElementById('groundNextBtn').disabled = false;
+  }
+}
+
+function nextGroundStep() {
+  groundStep++;
+  renderGrounding();
+}
+
+function resetGrounding() {
+  groundStep = 0;
+  groundFilled = 0;
+  renderGrounding();
+}
+
+// ═══ CHECKLIST ═══
+const checkItems = [
+  'I know where my safe room is',
+  'I have a flashlight with batteries',
+  'My phone is charged',
+  'I have water nearby',
+  'I know where my shoes are (for debris)',
+  'I have a way to get weather alerts',
+  'My pets are accounted for',
+  'My family knows the plan',
+  'I have blankets or pillows for cover',
+  'I know the difference between a watch and warning'
+];
+
+function renderChecklist() {
+  const el = document.getElementById('checklistItems');
+  el.innerHTML = checkItems.map((item, i) => `
+    <div class="check-item">
+      <div class="check-box" id="check${i}" onclick="toggleCheck(${i})">✓</div>
+      <div class="check-label">${item}</div>
+    </div>`).join('');
+}
+
+function toggleCheck(i) {
+  document.getElementById('check' + i).classList.toggle('checked');
+}
+
+// ═══ FACTS ═══
+const facts = [
+  { emoji: '🔊', title: 'Thunder can\'t hurt you', body: 'Thunder is just the sound of air rapidly expanding from lightning\'s heat. It\'s the same sound every time, no matter how close it feels. The sound itself poses zero danger.' },
+  { emoji: '⚡', title: 'Lightning strikes are rare', body: 'Your odds of being struck by lightning in any given year are about 1 in 1,222,000. Inside a building, you are effectively safe from lightning.' },
+  { emoji: '🌪', title: 'Watch ≠ Warning', body: 'A watch means conditions are possible. A warning means something has been detected. Most watches never become warnings. Knowing the difference reduces panic.' },
+  { emoji: '🏠', title: 'Your home is stronger than you think', body: 'Modern construction is designed to withstand severe thunderstorms. Even mobile homes can handle straight-line winds from typical storms. Tornadoes are the exception, not the rule.' },
+  { emoji: '📉', title: 'Most warnings pass without damage', body: 'The vast majority of tornado warnings expire without a tornado touching down in populated areas. Warning polygons cover large areas — being in one doesn\'t mean you\'re in the path.' },
+  { emoji: '🧠', title: 'Your anxiety is lying to you', body: 'Anxiety makes threats feel closer, bigger, and more certain than they are. Your body\'s alarm system is working overtime. The storm is real — but your fear is amplifying it beyond reality.' },
+];
+
+function renderFacts() {
+  document.getElementById('factsBody').innerHTML = '<p style="font-size:13px;color:var(--muted);margin-bottom:16px">Knowledge replaces fear. Here\'s what\'s actually happening.</p>' +
+    facts.map(f => `<div class="fact-card"><div class="fact-emoji">${f.emoji}</div><div class="fact-title">${f.title}</div><div class="fact-body">${f.body}</div></div>`).join('');
+}
+
+// ═══ JOURNAL ═══
+function selectMood(btn) {
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function saveJournal() {
+  const btn = event.currentTarget;
+  btn.textContent = '✓ Saved';
+  btn.style.background = 'var(--blue)';
+  setTimeout(() => { btn.textContent = 'Save Entry'; btn.style.background = ''; }, 2000);
+}
+
+// ═══ INIT ═══
+renderGrounding();
+renderChecklist();
+renderFacts();
+</script>
+
+</body>
+</html>
